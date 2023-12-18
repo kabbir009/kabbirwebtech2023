@@ -1,0 +1,97 @@
+<?php
+session_start();
+
+// Sample data storage (in a real scenario, you'd use a database)
+if (!isset($_SESSION['answers'])) {
+$_SESSION['answers'] = [];
+}
+
+// Function to upload answers
+function uploadAnswers($studentId, $answers) {
+$_SESSION['answers'][$studentId] = $answers;
+}
+
+// Function to update answers
+function updateAnswers($studentId, $answers) {
+if (isset($_SESSION['answers'][$studentId])) {
+$_SESSION['answers'][$studentId] = $answers;
+return true;
+}
+return false;
+}
+
+// Function to delete answers
+function deleteAnswers($studentId) {
+if (isset($_SESSION['answers'][$studentId])) {
+unset($_SESSION['answers'][$studentId]);
+return true;
+}
+return false;
+}
+
+// Function to search for answers (Ajax)
+function searchAnswers($studentId) {
+if (isset($_SESSION['answers'][$studentId])) {
+return $_SESSION['answers'][$studentId];
+}
+return null;
+}
+
+// Example usage:
+
+// Assume you have a form with 10 text fields named answer1, answer2, ..., answer10
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentId'])) {
+$studentId = $_POST['studentId'];
+
+// Check if the student is uploading or updating answers
+if (isset($_POST['answers'])) {
+$answers = $_POST['answers'];
+if (isset($_SESSION['answers'][$studentId])) {
+updateAnswers($studentId, $answers);
+} else {
+uploadAnswers($studentId, $answers);
+}
+} elseif (isset($_POST['delete'])) {
+// Delete answers
+deleteAnswers($studentId);
+}
+}
+
+// For Ajax search feature
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'search') {
+$studentId = $_GET['studentId'];
+$result = searchAnswers($studentId);
+header('Content-Type: application/json');
+echo json_encode($result);
+exit;
+}
+?>
+
+<!-- HTML form for uploading/updating answers -->
+<form method="post" action="">
+<input type="hidden" name="studentId" value="student123">
+<textarea name="answers[]" placeholder="Answer 1"></textarea>
+<!-- Add similar fields for answers 2 to 10 -->
+<button type="submit">Upload/Update Answers</button>
+</form>
+
+<!-- Ajax script for searching answers -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+function searchAnswersAjax(studentId) {
+$.ajax({
+url: 'your_php_script.php?action=search&studentId=' + studentId,
+method: 'GET',
+success: function (data) {
+console.log(data);
+// Handle the retrieved data as needed
+},
+error: function (error) {
+console.error(error);
+}
+});
+}
+
+// Example usage:
+searchAnswersAjax('student123');
+</script>
